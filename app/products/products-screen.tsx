@@ -5,12 +5,13 @@ import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Product, ProductsResponse } from "../types/product";
+import AdminSidebar from "../components/admin-sidebar";
+import { loadSettings } from "../lib/settings-storage";
 
 const AnalyticsPanel = dynamic(() => import("./analytics-panel"), {
   ssr: false,
 });
 
-const PAGE_SIZE = 10;
 const COLUMN_OPTIONS = ["image", "name", "category", "price", "stock", "rating"] as const;
 
 type SortOption = "name" | "price" | "rating";
@@ -23,12 +24,15 @@ export default function ProductsScreen() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(searchParams.get("query") ?? "");
+  const [preferenceSort] = useState<SortOption>(() => loadSettings().preferences.defaultSorting);
+  const [preferenceRows] = useState<10 | 25 | 50>(() => loadSettings().preferences.rowsPerPage);
 
   const query = searchParams.get("query") ?? "";
   const selectedCategories = searchParams.getAll("category");
   const minRating = Number(searchParams.get("rating") ?? "0");
-  const sortBy = (searchParams.get("sort") ?? "name") as SortOption;
+  const sortBy = (searchParams.get("sort") ?? preferenceSort) as SortOption;
   const page = Number(searchParams.get("page") ?? "1");
+  const rowsPerPage = Number(searchParams.get("rows") ?? preferenceRows);
   const visibleColumns = searchParams.getAll("col") as ColumnOption[];
   const paramsSnapshot = searchParams.toString();
 
@@ -115,12 +119,12 @@ export default function ProductsScreen() {
     return sorted;
   }, [allProducts, minRating, query, selectedCategories, sortBy]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / rowsPerPage));
   const currentPage = Math.min(pageCount, Math.max(1, page));
   const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredProducts.slice(start, start + PAGE_SIZE);
-  }, [currentPage, filteredProducts]);
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredProducts.slice(start, start + rowsPerPage);
+  }, [currentPage, filteredProducts, rowsPerPage]);
 
   const toggleCategory = useCallback(
     (category: string) => {
@@ -144,41 +148,10 @@ export default function ProductsScreen() {
     [columns, updateParams],
   );
 
-  const navItems: Array<{ label: string; active: boolean }> = [
-    { label: "Overview", active: true },
-    { label: "Products", active: true },
-    { label: "Analytics", active: false },
-    { label: "Reports", active: false },
-    { label: "Settings", active: false },
-  ];
-
   return (
     <div className="dashboard-grid min-h-screen p-3 md:p-5">
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[250px_1fr]">
-        <aside className="glass rounded-2xl p-4 lg:sticky lg:top-5 lg:h-[calc(100vh-2.5rem)]">
-          <div className="mb-8 flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-[var(--accent)]" />
-            <div>
-              <p className="text-sm text-[var(--muted)]">Project</p>
-              <h1 className="text-lg font-semibold">Alpha Console</h1>
-            </div>
-          </div>
-          <nav className="space-y-2 text-sm">
-            {navItems.map(({ label, active }) => (
-              <div
-                key={label}
-                className={`rounded-lg px-3 py-2 ${active ? "bg-[var(--accent-soft)] font-medium" : "text-[var(--muted)]"}`}
-              >
-                {label}
-              </div>
-            ))}
-          </nav>
-          <section className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-            <p className="text-xs text-[var(--muted)]">User profile</p>
-            <p className="mt-1 font-semibold">Jane Diaz</p>
-            <p className="font-mono text-xs text-[var(--muted)]">jane.diaz@example.com</p>
-          </section>
-        </aside>
+        <AdminSidebar currentPath={pathname} />
 
         <main className="space-y-4">
           <header className="glass rounded-2xl p-4">
@@ -203,7 +176,7 @@ export default function ProductsScreen() {
           <AnalyticsPanel products={filteredProducts} />
 
           <section className="glass rounded-2xl p-4">
-            <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-[1fr_auto_auto_auto]">
+            <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-[1fr_auto_auto_auto_auto]">
               <input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
@@ -229,9 +202,18 @@ export default function ProductsScreen() {
                 <option value="3">Rating 3+</option>
                 <option value="4">Rating 4+</option>
               </select>
+              <select
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+                value={String(rowsPerPage)}
+                onChange={(event) => updateParams({ rows: event.target.value, page: "1" })}
+              >
+                <option value="10">10 rows</option>
+                <option value="25">25 rows</option>
+                <option value="50">50 rows</option>
+              </select>
               <button
                 onClick={() =>
-                  updateParams({ query: null, category: null, rating: null, sort: "name", page: "1" })
+                  updateParams({ query: null, category: null, rating: null, sort: null, rows: null, page: "1" })
                 }
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
               >
@@ -239,23 +221,29 @@ export default function ProductsScreen() {
               </button>
             </div>
 
-            <div className="mb-3 flex flex-wrap gap-2">
-              {categories.map((category) => {
-                const selected = selectedCategories.includes(category);
-                return (
-                  <button
-                    key={category}
-                    onClick={() => toggleCategory(category)}
-                    className={`rounded-full border px-3 py-1 text-xs capitalize transition ${
-                      selected
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                        : "border-[var(--border)] bg-[var(--surface)]"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                );
-              })}
+            <div className="mb-3">
+              <details className="group relative">
+                <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
+                  <span>
+                    Categories
+                    {selectedCategories.length > 0 ? ` (${selectedCategories.length} selected)` : " (All)"}
+                  </span>
+                  <span className="text-xs text-[var(--muted)] group-open:rotate-180 transition">v</span>
+                </summary>
+                <div className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+                  {categories.map((category) => (
+                    <label key={category} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-[var(--surface-soft)]">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(category)}
+                        onChange={() => toggleCategory(category)}
+                        className="h-4 w-4 accent-[var(--accent)]"
+                      />
+                      <span className="capitalize">{category}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
             </div>
 
             <div className="mb-4 flex flex-wrap gap-2 text-xs">
@@ -310,7 +298,7 @@ export default function ProductsScreen() {
 
             <div className="mt-4 flex items-center justify-between">
               <p className="text-xs text-[var(--muted)]">
-                Showing {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filteredProducts.length)} of {filteredProducts.length}
+                Showing {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, filteredProducts.length)} of {filteredProducts.length}
               </p>
               <div className="flex items-center gap-2">
                 <button

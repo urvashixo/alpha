@@ -30,12 +30,17 @@ export default function AnalyticsPanel({ products }: AnalyticsPanelProps) {
         <span className="text-xs text-[var(--muted)]">Live from current filters</span>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard label="Total Products" value={totalProducts.toString()} />
-        <MetricCard label="Average Rating" value={averageRating.toFixed(2)} />
-        <MetricCard label="Inventory Value" value={`$${Math.round(totalInventoryValue).toLocaleString()}`} />
+        <MetricCard label="Total Products" value={totalProducts.toString()} tone="panel-pop" />
+        <MetricCard label="Average Rating" value={averageRating.toFixed(2)} tone="panel-soft" />
+        <MetricCard
+          label="Inventory Value"
+          value={`$${Math.round(totalInventoryValue).toLocaleString()}`}
+          tone="panel-cool"
+        />
         <MetricCard
           label="Categories"
           value={Object.keys(categoryMap).length.toString()}
+          tone="bg-[var(--surface)]"
         />
       </div>
       <div className="mt-4 space-y-2">
@@ -61,9 +66,17 @@ export default function AnalyticsPanel({ products }: AnalyticsPanelProps) {
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+}) {
   return (
-    <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+    <article className={`rounded-xl border p-3 ${tone}`}>
       <p className="text-xs text-[var(--muted)]">{label}</p>
       <p className="mt-1 text-xl font-semibold">{value}</p>
     </article>

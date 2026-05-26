@@ -1,4 +1,4 @@
-export type UserRole = "Admin" | "Manager";
+export type UserRole = "Admin" | "User";
 
 export type LandingPage = "/overview" | "/products" | "/analytics";
 

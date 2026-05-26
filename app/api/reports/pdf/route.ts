@@ -6,7 +6,6 @@ function escapePdfText(text: string) {
 }
 
 function createSimplePdf(lines: string[]) {
-  const pageHeight = 792;
   const top = 740;
   const step = 18;
   const textCommands = lines

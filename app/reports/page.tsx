@@ -129,7 +129,6 @@ export default async function ReportsPage() {
               </div>
             </div>
           </section>
-
         </main>
       </div>
     </div>

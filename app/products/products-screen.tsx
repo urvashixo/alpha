@@ -13,6 +13,7 @@ const AnalyticsPanel = dynamic(() => import("./analytics-panel"), {
 });
 
 const COLUMN_OPTIONS = ["image", "name", "category", "price", "stock", "rating"] as const;
+const PUBLISHED_KEY = "alpha-published-products";
 
 type SortOption = "name" | "price" | "rating";
 type ColumnOption = (typeof COLUMN_OPTIONS)[number];
@@ -26,6 +27,16 @@ export default function ProductsScreen() {
   const [searchInput, setSearchInput] = useState(searchParams.get("query") ?? "");
   const [preferenceSort] = useState<SortOption>(() => loadSettings().preferences.defaultSorting);
   const [preferenceRows] = useState<10 | 25 | 50>(() => loadSettings().preferences.rowsPerPage);
+  const [publishedList, setPublishedList] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(PUBLISHED_KEY);
+      return raw ? (JSON.parse(raw) as number[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const isAdmin = true;
 
   const query = searchParams.get("query") ?? "";
   const selectedCategories = searchParams.getAll("category");
@@ -59,6 +70,13 @@ export default function ProductsScreen() {
       clearInterval(interval);
     };
   }, []);
+
+  const publishedIds = useMemo(() => {
+    if (publishedList.length > 0) {
+      return new Set(publishedList);
+    }
+    return new Set(allProducts.map((item) => item.id));
+  }, [allProducts, publishedList]);
 
   const updateParams = useCallback(
     (changes: Record<string, string | string[] | null>) => {
@@ -100,6 +118,7 @@ export default function ProductsScreen() {
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const productList = allProducts.filter((product) => {
+      const publishedMatch = true;
       const searchMatch =
         normalized.length === 0 ||
         product.title.toLowerCase().includes(normalized) ||
@@ -107,7 +126,7 @@ export default function ProductsScreen() {
       const categoryMatch =
         selectedCategories.length === 0 || selectedCategories.includes(product.category);
       const ratingMatch = product.rating >= minRating;
-      return searchMatch && categoryMatch && ratingMatch;
+      return publishedMatch && searchMatch && categoryMatch && ratingMatch;
     });
 
     const sorted = [...productList];
@@ -117,7 +136,25 @@ export default function ProductsScreen() {
       return a.title.localeCompare(b.title);
     });
     return sorted;
-  }, [allProducts, minRating, query, selectedCategories, sortBy]);
+  }, [allProducts, isAdmin, minRating, publishedIds, query, selectedCategories, sortBy]);
+
+  const togglePublished = useCallback(
+    (id: number) => {
+      setPublishedList((prev) => {
+        const base = prev.length > 0 ? prev : allProducts.map((item) => item.id);
+        const nextSet = new Set(base);
+        if (nextSet.has(id)) {
+          nextSet.delete(id);
+        } else {
+          nextSet.add(id);
+        }
+        const next = Array.from(nextSet);
+        localStorage.setItem(PUBLISHED_KEY, JSON.stringify(next));
+        return next;
+      });
+    },
+    [allProducts],
+  );
 
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / rowsPerPage));
   const currentPage = Math.min(pageCount, Math.max(1, page));
@@ -148,6 +185,22 @@ export default function ProductsScreen() {
     [columns, updateParams],
   );
 
+  const moveColumn = useCallback(
+    (column: ColumnOption, direction: "left" | "right") => {
+      const base = [...columns];
+      const index = base.indexOf(column);
+      if (index === -1) return;
+
+      const targetIndex = direction === "left" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= base.length) return;
+
+      const [item] = base.splice(index, 1);
+      base.splice(targetIndex, 0, item);
+      updateParams({ col: base });
+    },
+    [columns, updateParams],
+  );
+
   return (
     <div className="dashboard-grid min-h-screen p-3 md:p-5">
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[250px_1fr]">
@@ -173,7 +226,7 @@ export default function ProductsScreen() {
             </div>
           </header>
 
-          <AnalyticsPanel products={filteredProducts} />
+          {isAdmin && <AnalyticsPanel products={filteredProducts} />}
 
           <section className="glass rounded-2xl p-4">
             <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-[1fr_auto_auto_auto_auto]">
@@ -248,17 +301,34 @@ export default function ProductsScreen() {
 
             <div className="mb-4 flex flex-wrap gap-2 text-xs">
               {COLUMN_OPTIONS.map((column) => (
-                <button
+                <div
                   key={column}
-                  onClick={() => toggleColumn(column)}
-                  className={`rounded-md border px-2 py-1 capitalize ${
+                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 capitalize ${
                     columns.includes(column)
                       ? "border-[var(--accent)] bg-[var(--accent-soft)]"
                       : "border-[var(--border)] bg-[var(--surface)]"
                   }`}
                 >
-                  {column}
-                </button>
+                  <button onClick={() => toggleColumn(column)}>{column}</button>
+                  {columns.includes(column) && (
+                    <>
+                      <button
+                        onClick={() => moveColumn(column, "left")}
+                        className="rounded border border-[var(--border)] px-1"
+                        aria-label={`Move ${column} left`}
+                      >
+                        &lt;
+                      </button>
+                      <button
+                        onClick={() => moveColumn(column, "right")}
+                        className="rounded border border-[var(--border)] px-1"
+                        aria-label={`Move ${column} right`}
+                      >
+                        &gt;
+                      </button>
+                    </>
+                  )}
+                </div>
               ))}
             </div>
 
@@ -272,6 +342,7 @@ export default function ProductsScreen() {
                     {columns.includes("price") && <th className="px-3 py-2">Price</th>}
                     {columns.includes("stock") && <th className="px-3 py-2">Stock Status</th>}
                     {columns.includes("rating") && <th className="px-3 py-2">Rating</th>}
+                    {isAdmin && <th className="px-3 py-2">Published</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -289,7 +360,14 @@ export default function ProductsScreen() {
                     </tr>
                   ) : (
                     paginatedProducts.map((product) => (
-                      <MemoProductRow key={product.id} product={product} columns={columns} />
+                      <MemoProductRow
+                        key={product.id}
+                        product={product}
+                        columns={columns}
+                        isAdmin={isAdmin}
+                        isPublished={publishedIds.has(product.id)}
+                        onTogglePublished={togglePublished}
+                      />
                     ))
                   )}
                 </tbody>
@@ -327,7 +405,19 @@ export default function ProductsScreen() {
   );
 }
 
-function ProductRow({ product, columns }: { product: Product; columns: ColumnOption[] }) {
+function ProductRow({
+  product,
+  columns,
+  isAdmin,
+  isPublished,
+  onTogglePublished,
+}: {
+  product: Product;
+  columns: ColumnOption[];
+  isAdmin: boolean;
+  isPublished: boolean;
+  onTogglePublished: (id: number) => void;
+}) {
   const stockStatus = product.stock > 20 ? "In Stock" : product.stock > 0 ? "Low Stock" : "Out of Stock";
   return (
     <tr className="border-t border-[var(--border)]">
@@ -351,6 +441,18 @@ function ProductRow({ product, columns }: { product: Product; columns: ColumnOpt
         </td>
       )}
       {columns.includes("rating") && <td className="px-3 py-2">{product.rating.toFixed(2)}</td>}
+      {isAdmin && (
+        <td className="px-3 py-2">
+          <button
+            onClick={() => onTogglePublished(product.id)}
+            className={`rounded-full px-2 py-1 text-xs ${
+              isPublished ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+            }`}
+          >
+            {isPublished ? "Published" : "Hidden"}
+          </button>
+        </td>
+      )}
     </tr>
   );
 }

@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { label: "Products", href: "/products" },
   { label: "Analytics", href: "/analytics" },
   { label: "Reports", href: "/reports" },
-  { label: "Settings", href: "/settings" },
+  { label: "Profile", href: "/settings" },
 ];
 
 export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
@@ -22,9 +22,8 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
   const profile = settings.profile;
   const collapsed = settings.preferences.sidebarCollapsed;
 
-  function handleLogout() {
-    document.cookie = "alpha-auth=; Max-Age=0; Path=/; SameSite=Lax";
-    router.push("/");
+  function handleGoHome() {
+    router.push("/products");
   }
 
   return (
@@ -66,14 +65,14 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
         </div>
       </section>
       <button
-        onClick={handleLogout}
+        onClick={handleGoHome}
         className="mt-3 w-full rounded-lg border border-[#3d3d3d] bg-[#0f0f0f] px-3 py-2 text-sm text-[#efe9da]"
       >
-        {collapsed ? "Out" : "Logout"}
+        {collapsed ? "Home" : "Go to Products"}
       </button>
       {!collapsed && (
         <Link href="/settings" className="mt-2 block text-center text-xs text-[#b4ad9c] hover:underline">
-          Edit profile
+          Open profile
         </Link>
       )}
     </aside>

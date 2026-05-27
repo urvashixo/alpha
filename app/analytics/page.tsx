@@ -57,8 +57,9 @@ export default async function AnalyticsPage() {
                 {[44, 57, 52, 63, 60, 72, 68, 78].map((height, index) => (
                   <div key={`${height}-${index}`} className="space-y-2">
                     <div
-                      className="rounded-t-xl bg-gradient-to-b from-[#39b7ff] to-[#2d66ff]"
+                      className="rounded-t-xl bg-gradient-to-b from-[#39b7ff] to-[#2d66ff] transition-transform hover:scale-[1.03]"
                       style={{ height: `${height * 2}px` }}
+                      title={`Week ${index + 1}: ${height} units`}
                     />
                     <p className="text-center text-[11px] text-[var(--muted)]">W{index + 1}</p>
                   </div>
@@ -79,7 +80,7 @@ export default async function AnalyticsPage() {
                         <span className="text-[var(--muted)]">{count}</span>
                       </div>
                       <div className="h-2 rounded-full bg-[var(--surface-soft)]">
-                        <div className="h-2 rounded-full" style={{ width: `${width}%`, background: colors[idx] }} />
+                        <div className="h-2 rounded-full" style={{ width: `${width}%`, background: colors[idx] }} title={`${name}: ${count} products (${width}%)`} />
                       </div>
                     </div>
                   );
@@ -108,7 +109,9 @@ export default async function AnalyticsPage() {
                 </defs>
                 <path d="M0 125 L52 108 L104 116 L156 92 L208 98 L260 76 L312 84 L364 62 L416 68" fill="none" stroke="url(#lineGlow)" strokeWidth="4" strokeLinecap="round" />
                 {[125, 108, 116, 92, 98, 76, 84, 62, 68].map((point, idx) => (
-                  <circle key={`${point}-${idx}`} cx={idx * 52} cy={point} r="4" fill="#9eddff" />
+                  <circle key={`${point}-${idx}`} cx={idx * 52} cy={point} r="5" fill="#9eddff">
+                    <title>{`Point ${idx + 1}: Rating ${(5 - point / 40).toFixed(2)}`}</title>
+                  </circle>
                 ))}
               </svg>
             </article>
@@ -116,9 +119,9 @@ export default async function AnalyticsPage() {
             <article className="glass rounded-2xl p-4">
               <h3 className="mb-4 text-lg font-semibold">Conversion Bubbles</h3>
               <div className="relative h-44 overflow-hidden rounded-xl bg-[var(--surface-soft)]">
-                <div className="absolute left-6 top-10 flex h-28 w-28 items-center justify-center rounded-full bg-[#2d66ff] text-2xl font-bold text-white">12k</div>
-                <div className="absolute left-40 top-14 flex h-20 w-20 items-center justify-center rounded-full bg-[#35c9ff] text-lg font-semibold text-[#06203a]">3.2k</div>
-                <div className="absolute left-56 top-24 flex h-14 w-14 items-center justify-center rounded-full bg-[#f0b240] text-sm font-semibold text-[#3f2f10]">1.3k</div>
+                <div className="absolute left-6 top-10 flex h-28 w-28 items-center justify-center rounded-full bg-[#2d66ff] text-2xl font-bold text-white transition-transform hover:scale-105" title="North Region: 12,000 conversions">12k</div>
+                <div className="absolute left-40 top-14 flex h-20 w-20 items-center justify-center rounded-full bg-[#35c9ff] text-lg font-semibold text-[#06203a] transition-transform hover:scale-105" title="Central Region: 3,200 conversions">3.2k</div>
+                <div className="absolute left-56 top-24 flex h-14 w-14 items-center justify-center rounded-full bg-[#f0b240] text-sm font-semibold text-[#3f2f10] transition-transform hover:scale-105" title="South Region: 1,300 conversions">1.3k</div>
                 <div className="absolute right-4 top-4 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--muted)]">Regional mix</div>
               </div>
             </article>

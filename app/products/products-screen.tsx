@@ -317,14 +317,14 @@ export default function ProductsScreen() {
                         className="rounded border border-[var(--border)] px-1"
                         aria-label={`Move ${column} left`}
                       >
-                        &lt;
+                        {String.fromCharCode(8592)}
                       </button>
                       <button
                         onClick={() => moveColumn(column, "right")}
                         className="rounded border border-[var(--border)] px-1"
                         aria-label={`Move ${column} right`}
                       >
-                        &gt;
+                        {String.fromCharCode(8594)}
                       </button>
                     </>
                   )}
@@ -336,25 +336,24 @@ export default function ProductsScreen() {
               <table className="w-full min-w-[760px] bg-[var(--surface)] text-left text-sm">
                 <thead className="bg-[var(--surface-soft)] text-xs uppercase tracking-wide text-[var(--muted)]">
                   <tr>
-                    {columns.includes("image") && <th className="px-3 py-2">Image</th>}
-                    {columns.includes("name") && <th className="px-3 py-2">Product Name</th>}
-                    {columns.includes("category") && <th className="px-3 py-2">Category</th>}
-                    {columns.includes("price") && <th className="px-3 py-2">Price</th>}
-                    {columns.includes("stock") && <th className="px-3 py-2">Stock Status</th>}
-                    {columns.includes("rating") && <th className="px-3 py-2">Rating</th>}
+                    {columns.map((col) => (
+                      <th key={col} className="px-3 py-2">
+                        {col === "image" ? "Image" : col === "name" ? "Product Name" : col === "stock" ? "Stock Status" : col.charAt(0).toUpperCase() + col.slice(1)}
+                      </th>
+                    ))}
                     {isAdmin && <th className="px-3 py-2">Published</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td className="px-3 py-6 text-center text-[var(--muted)]" colSpan={6}>
+                      <td className="px-3 py-6 text-center text-[var(--muted)]" colSpan={columns.length + (isAdmin ? 1 : 0)}>
                         Loading products...
                       </td>
                     </tr>
                   ) : paginatedProducts.length === 0 ? (
                     <tr>
-                      <td className="px-3 py-6 text-center text-[var(--muted)]" colSpan={6}>
+                      <td className="px-3 py-6 text-center text-[var(--muted)]" colSpan={columns.length + (isAdmin ? 1 : 0)}>
                         No products match the current filters.
                       </td>
                     </tr>
@@ -419,28 +418,35 @@ function ProductRow({
   onTogglePublished: (id: number) => void;
 }) {
   const stockStatus = product.stock > 20 ? "In Stock" : product.stock > 0 ? "Low Stock" : "Out of Stock";
-  return (
-    <tr className="border-t border-[var(--border)]">
-      {columns.includes("image") && (
-        <td className="px-3 py-2">
-          <img src={product.thumbnail} alt={product.title} className="h-11 w-11 rounded-md object-cover" />
-        </td>
-      )}
-      {columns.includes("name") && (
-        <td className="px-3 py-2 font-medium">
-          <Link href={`/products/${product.id}`} className="hover:underline">
+
+  function renderCell(col: ColumnOption) {
+    switch (col) {
+      case "image":
+        return <img src={product.thumbnail} alt={product.title} className="h-11 w-11 rounded-md object-cover" />;
+      case "name":
+        return (
+          <Link href={`/products/${product.id}`} className="font-medium hover:underline">
             {product.title}
           </Link>
+        );
+      case "category":
+        return <span className="capitalize">{product.category}</span>;
+      case "price":
+        return <>${product.price.toFixed(2)}</>;
+      case "stock":
+        return <span className="rounded-full bg-[var(--surface-soft)] px-2 py-1 text-xs">{stockStatus}</span>;
+      case "rating":
+        return <>{product.rating.toFixed(2)}</>;
+    }
+  }
+
+  return (
+    <tr className="border-t border-[var(--border)]">
+      {columns.map((col) => (
+        <td key={col} className="px-3 py-2">
+          {renderCell(col)}
         </td>
-      )}
-      {columns.includes("category") && <td className="px-3 py-2 capitalize">{product.category}</td>}
-      {columns.includes("price") && <td className="px-3 py-2">${product.price.toFixed(2)}</td>}
-      {columns.includes("stock") && (
-        <td className="px-3 py-2">
-          <span className="rounded-full bg-[var(--surface-soft)] px-2 py-1 text-xs">{stockStatus}</span>
-        </td>
-      )}
-      {columns.includes("rating") && <td className="px-3 py-2">{product.rating.toFixed(2)}</td>}
+      ))}
       {isAdmin && (
         <td className="px-3 py-2">
           <button

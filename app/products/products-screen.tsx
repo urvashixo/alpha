@@ -6,6 +6,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Product, ProductsResponse } from "../types/product";
 import AdminSidebar from "../components/admin-sidebar";
+import TopNavbar from "../components/top-navbar";
 import { loadSettings } from "../lib/settings-storage";
 
 const AnalyticsPanel = dynamic(() => import("./analytics-panel"), {
@@ -36,7 +37,7 @@ export default function ProductsScreen() {
       return [];
     }
   });
-  const isAdmin = true;
+  const isAdmin = typeof document !== "undefined" && document.cookie.includes("alpha-role=admin");
 
   const query = searchParams.get("query") ?? "";
   const selectedCategories = searchParams.getAll("category");
@@ -118,7 +119,7 @@ export default function ProductsScreen() {
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const productList = allProducts.filter((product) => {
-      const publishedMatch = true;
+      const publishedMatch = isAdmin || publishedIds.has(product.id);
       const searchMatch =
         normalized.length === 0 ||
         product.title.toLowerCase().includes(normalized) ||
@@ -207,24 +208,7 @@ export default function ProductsScreen() {
         <AdminSidebar currentPath={pathname} />
 
         <main className="space-y-4">
-          <header className="glass rounded-2xl p-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold">Product Dashboard</h2>
-                <p className="text-sm text-[var(--muted)]">
-                  Responsive product management with URL-driven state.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
-                  Feedback
-                </button>
-                <button className="rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white">
-                  Actions
-                </button>
-              </div>
-            </div>
-          </header>
+          <TopNavbar title="Product Dashboard" description="Responsive product management with URL-driven state." />
 
           {isAdmin && <AnalyticsPanel products={filteredProducts} />}
 

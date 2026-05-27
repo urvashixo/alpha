@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AdminSidebar from "../components/admin-sidebar";
+import TopNavbar from "../components/top-navbar";
 import { loadSettings, saveSettings } from "../lib/settings-storage";
 import { AppSettings, UserRole } from "../types/settings";
 
@@ -25,10 +26,7 @@ export default function SettingsPage() {
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[250px_1fr]">
         <AdminSidebar currentPath="/settings" />
         <main className="space-y-4">
-          <header className="glass rounded-2xl p-4">
-            <h2 className="text-2xl font-semibold">User Profile</h2>
-            <p className="text-sm text-[var(--muted)]">Manage your profile details.</p>
-          </header>
+          <TopNavbar title="User Profile" description="Manage your profile details." />
 
           <section className="glass rounded-2xl p-4">
             <div className="grid gap-4 md:grid-cols-[220px_1fr]">
@@ -57,7 +55,10 @@ export default function SettingsPage() {
                 </label>
                 <label className="text-sm">
                   <span className="mb-1 block text-[var(--muted)]">Role</span>
-                  <select className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2" value={settings.profile.role} onChange={(event) => update("role", event.target.value as UserRole)}>
+                  <select className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2" value={settings.profile.role} onChange={(event) => {
+                    update("role", event.target.value as UserRole);
+                    document.cookie = `alpha-role=${event.target.value === "Admin" ? "admin" : "user"}; Path=/; SameSite=Lax`;
+                  }}>
                     <option value="User">User</option>
                     <option value="Admin">Admin</option>
                   </select>

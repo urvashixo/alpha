@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AdminSidebar from "../components/admin-sidebar";
+import TopNavbar from "../components/top-navbar";
 import { getAllProducts } from "../lib/products";
 
 export default async function OverviewPage() {
@@ -14,10 +15,7 @@ export default async function OverviewPage() {
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[250px_1fr]">
         <AdminSidebar currentPath="/overview" />
         <main className="space-y-4">
-          <header className="glass rounded-2xl p-4">
-            <h2 className="text-2xl font-semibold">Overview</h2>
-            <p className="text-sm text-[var(--muted)]">Quick snapshot of the product ecosystem.</p>
-          </header>
+          <TopNavbar title="Overview" description="Quick snapshot of the product ecosystem." />
 
           <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <article className="glass rounded-xl p-4">

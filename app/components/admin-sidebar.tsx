@@ -21,6 +21,11 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
   const settings = loadSettings();
   const profile = settings.profile;
   const collapsed = settings.preferences.sidebarCollapsed;
+  const role = typeof document !== "undefined" && document.cookie.includes("alpha-role=admin") ? "admin" : "user";
+
+  const visibleNavItems = role === "admin"
+    ? NAV_ITEMS
+    : NAV_ITEMS.filter((item) => item.href === "/products" || item.href === "/settings");
 
   function handleGoHome() {
     router.push("/products");
@@ -36,7 +41,7 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
         </div>
       </div>
       <nav className="space-y-2 text-sm">
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const active = currentPath === item.href;
           return (
             <Link

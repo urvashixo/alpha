@@ -1,4 +1,5 @@
 import AdminSidebar from "../components/admin-sidebar";
+import TopNavbar from "../components/top-navbar";
 import { getAllProducts } from "../lib/products";
 
 export default async function ReportsPage() {
@@ -30,35 +31,28 @@ export default async function ReportsPage() {
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[250px_1fr]">
         <AdminSidebar currentPath="/reports" />
         <main className="space-y-4">
-          <header className="glass rounded-2xl p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-semibold">Reports</h2>
-                <p className="text-sm text-[var(--muted)]">Generate and export business reports</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <select className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
-                  <option>Date Range</option>
-                  <option>Last 7 Days</option>
-                  <option>Last 30 Days</option>
-                  <option>Last Quarter</option>
-                </select>
-                <select className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
-                  <option>Category</option>
-                  <option>All Categories</option>
-                  {Object.keys(categoryCounts).map((category) => (
-                    <option key={category}>{category}</option>
-                  ))}
-                </select>
-                <a
-                  href="/api/reports/pdf"
-                  className="rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white"
-                >
-                  Export PDF
-                </a>
-              </div>
-            </div>
-          </header>
+          <TopNavbar title="Reports" description="Generate and export business reports" />
+          <div className="flex flex-wrap gap-2">
+            <select className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
+              <option>Date Range</option>
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+              <option>Last Quarter</option>
+            </select>
+            <select className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
+              <option>Category</option>
+              <option>All Categories</option>
+              {Object.keys(categoryCounts).map((category) => (
+                <option key={category}>{category}</option>
+              ))}
+            </select>
+            <a
+              href="/api/reports/pdf"
+              className="rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white"
+            >
+              Export PDF
+            </a>
+          </div>
 
           <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <SummaryCard label="Revenue" value={`$${Math.round(estimatedRevenue / 1000)}k`} />

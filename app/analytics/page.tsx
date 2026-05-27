@@ -1,4 +1,5 @@
 import AdminSidebar from "../components/admin-sidebar";
+import TopNavbar from "../components/top-navbar";
 import { getAllProducts } from "../lib/products";
 
 export default async function AnalyticsPage() {
@@ -28,17 +29,7 @@ export default async function AnalyticsPage() {
       <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-4 lg:grid-cols-[250px_1fr]">
         <AdminSidebar currentPath="/analytics" />
         <main className="space-y-4">
-          <header className="glass rounded-2xl p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-3xl font-semibold">Analytics Dashboard</h2>
-                <p className="text-sm text-[var(--muted)]">Live product intelligence and inventory performance.</p>
-              </div>
-              <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--muted)]">
-                Last sync: now
-              </div>
-            </div>
-          </header>
+          <TopNavbar title="Analytics Dashboard" description="Live product intelligence and inventory performance." />
 
           <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Total Products" value={String(totalProducts)} trend="+8.2%" />

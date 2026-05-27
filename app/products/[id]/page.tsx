@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import TopNavbar from "../../components/top-navbar";
 import { Product } from "../../types/product";
 
 type ProductDetailsPageProps = {
@@ -52,9 +53,10 @@ export default function ProductDetailsPage({ params }: ProductDetailsPageProps) 
   const image = product.images[index] ?? product.thumbnail;
 
   return (
-    <main className="dashboard-grid min-h-screen p-4 md:p-6">
-      <div className="mx-auto max-w-5xl">
-        <Link href="/products" className="mb-4 inline-block text-sm text-[var(--muted)] hover:underline">
+    <div className="dashboard-grid min-h-screen p-3 md:p-5">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4">
+        <TopNavbar title={product?.title ?? "Product Details"} />
+        <Link href="/products" className="text-sm text-[var(--muted)] hover:underline">
           Back to products
         </Link>
         <section className="glass grid gap-4 rounded-2xl p-4 md:grid-cols-[1.1fr_1fr] md:p-6">
@@ -85,7 +87,7 @@ export default function ProductDetailsPage({ params }: ProductDetailsPageProps) 
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 
